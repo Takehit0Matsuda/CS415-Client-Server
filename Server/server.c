@@ -21,7 +21,7 @@ void *handle_request(void *socket_desc) {
     // Receiving the file name from the client
     valread = read(new_socket, buffer, BUFFER_SIZE - 1);
     buffer[valread] = '\0';  // Add null character to complete the C string
-    printf("From Client (%zd): %s\n", valread, buffer);
+    printf("From Client (%zd): %.*s\n", valread, (int)valread, buffer);
     // Build the file path
     char file_path[PATH_MAX];  // PATH_MAX is the standard definition for the maximum path length
     snprintf(file_path, sizeof(file_path), "root/%s", buffer);
@@ -36,7 +36,7 @@ void *handle_request(void *socket_desc) {
     } else {
         fseek(file, 0, SEEK_END);  // Move to the end of the file
         size_t file_size = ftell(file);  // Get the file size
-        printf("File is %zd bytes\n", file_size);
+        printf("%s", buffer);
         fseek(file, 0, SEEK_SET);  // Move to the beginning of the file
 
         // Send the file size to the client
