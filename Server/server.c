@@ -62,7 +62,7 @@ void *handle_request(void *socket_desc) {
     }
 
     // Notify the client that the processing has finished
-    send(new_socket, "END\n", strlen("END\n"), 0);
+    send(new_socket, END_FLAG, 1, 0);
 
     // Close the connected socket
     close(new_socket);

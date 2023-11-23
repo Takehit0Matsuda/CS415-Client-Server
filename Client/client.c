@@ -81,6 +81,11 @@ int main(int argc, char const *argv[]) {
         buffer[bytes_received] = '\0'; // Add null character to complete the C string
         printf("%s", buffer);         // Display the received data
         total_received += bytes_received;
+            
+        if (strchr(buffer, END_FLAG) != NULL) {
+            total_received--;
+            break;
+        }
     }
 
     printf("\n");
