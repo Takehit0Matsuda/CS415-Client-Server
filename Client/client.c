@@ -4,14 +4,24 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <stdlib.h>
 
-#define PORT 8080
+//#define PORT 8080
+#define BUFFER_SIZE 1024
+#define END_FLAG '\n'
 
 int main(int argc, char const* argv[]) {
+    
+    if (argc != 2) {
+        fprintf(stderr, "Usage: %s <port>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    
+    
     int status, valread, client_fd;    // status: return value of connect(), valread: return value of read(), client_fd: client socket descriptor
     struct sockaddr_in serv_addr;      // server address structure
     char* hello = "Hello from client"; // message to be sent
-    char buffer[1024] = { 0 };         // receive buffer
+    char buffer[BUFFER_SIZE] = { 0 };         // receive buffer
 
     // Socket creation
     if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -20,7 +30,7 @@ int main(int argc, char const* argv[]) {
     }
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
+    serv_addr.sin_port = htons(atoi(argv[1]));
 
     // Convert IPv4 and IPv6 addresses from text to binary form
     if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
@@ -33,15 +43,47 @@ int main(int argc, char const* argv[]) {
         printf("\nConnection Failed \n"); // error handling if connection fails
         return -1;
     }
-
-    // Sending a message from the client to the server
-    send(client_fd, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
-
-    // Receiving and displaying the message from the server
-    valread = read(client_fd, buffer, 1024 - 1);
-    printf("%s\n", buffer);
-
+    
+    // Requesting the file name from the user
+    printf("Enter file to retrieve: ");
+    fgets(buffer, BUFFER_SIZE, stdin);
+    buffer[strlen(buffer) - 1] = END_FLAG;  // メッセージの終わりを示すフラグを追加
+    // Remove the trailing newline character
+    size_t len = strlen(buffer);
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+    }
+    
+    printf("Connecting on Localhost at port %d to get file %s.\n", atoi(argv[1]), buffer);
+    
+    // Sending the file name to the server
+    send(client_fd, buffer, strlen(buffer), 0);
+    
+    // クライアントからファイルサイズを受信
+    size_t file_size;
+    ssize_t valread_size = read(client_fd, &file_size, sizeof(file_size));
+    if (valread_size != sizeof(file_size)) {
+        perror("Error reading file size");
+        // エラーハンドリング
+        return -1;
+    }
+    printf("File Size: %zu\n", file_size);
+    
+    // ファイルサイズ分だけデータを受信
+    size_t total_received = 0;
+    while (total_received < file_size) {
+        ssize_t bytes_received = read(client_fd, buffer, BUFFER_SIZE - 1);
+        if (bytes_received <= 0) {
+            break;
+        }
+        buffer[bytes_received] = '\0';  // ヌル文字を追加してC文字列を完成させる
+        printf("%.*s", (int)bytes_received, buffer);  // 受信したデータを表示
+        total_received += bytes_received;
+    }
+    
+    // ENDの後に改行を追加
+    printf("\n");
+    
     // Closing the connected socket
     close(client_fd);
 
