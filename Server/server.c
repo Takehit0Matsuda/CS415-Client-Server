@@ -36,7 +36,7 @@ void *handle_request(void *socket_desc) {
     } else {
         fseek(file, 0, SEEK_END);  // Move to the end of the file
         size_t file_size = ftell(file);  // Get the file size
-        printf("%s", buffer);
+        printf("File is %zd bytes\n", file_size);
         fseek(file, 0, SEEK_SET);  // Move to the beginning of the file
 
         // Send the file size to the client
@@ -128,6 +128,8 @@ int main(int argc, char const* argv[]) {
 
         // Detach the thread to clean up resources automatically
         pthread_detach(thread_id);
+        
+        printf("\n");
     }
 
     // Not reached in this example, but closing the listening socket
